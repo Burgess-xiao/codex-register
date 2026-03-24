@@ -15,6 +15,8 @@ from ..config.constants import OTP_CODE_PATTERN
 
 logger = logging.getLogger(__name__)
 
+OTP_SENT_AT_TOLERANCE_SECONDS = 2
+
 
 class TempmailService(BaseEmailService):
     """
@@ -184,7 +186,7 @@ class TempmailService(BaseEmailService):
             email_id: 邮箱 token（如果不提供，从缓存中查找）
             timeout: 超时时间（秒）
             pattern: 验证码正则表达式
-            otp_sent_at: OTP 发送时间戳，只允许使用严格晚于该锚点的邮件
+            otp_sent_at: OTP 发送时间戳，只允许使用严格晚于该锚点减去容差后的邮件
 
         Returns:
             验证码字符串，如果超时或未找到返回 None
@@ -241,7 +243,8 @@ class TempmailService(BaseEmailService):
 
                     msg_timestamp = self._get_received_timestamp(msg)
                     if otp_sent_at is not None:
-                        if msg_timestamp is None or msg_timestamp <= otp_sent_at:
+                        min_allowed_timestamp = otp_sent_at - OTP_SENT_AT_TOLERANCE_SECONDS
+                        if msg_timestamp is None or msg_timestamp <= min_allowed_timestamp:
                             continue
 
                     message_id = str(

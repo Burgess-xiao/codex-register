@@ -1073,11 +1073,10 @@ class RegistrationEngine:
             self._log("未能重新进入登录流程", "warning")
             return None, None
 
-        password_ok, _ = self._submit_login_password_step_and_get_continue_url()
-        if not password_ok:
-            return None, None
-
         self._otp_sent_at = time.time()
+
+        if not self._submit_login_password_step():
+            return None, None
 
         code = self._get_verification_code()
         if not code:
